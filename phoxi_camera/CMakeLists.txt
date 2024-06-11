@@ -8,10 +8,10 @@ endif()
 # find dependencies
 
 set(DEPENDENCIES
-    rclcpp 
+    rclcpp
     rclpy
-    pcl_msgs 
-    pcl_conversions 
+    pcl_msgs
+    pcl_conversions
     sensor_msgs
     rclcpp_components
     cv_bridge
@@ -19,7 +19,7 @@ set(DEPENDENCIES
     nav_msgs
     tf2_ros
     tf2
-    tf2_geometry_msgs 
+    tf2_geometry_msgs
     OpenCV
     std_srvs
     PhoXi
@@ -28,87 +28,85 @@ set(DEPENDENCIES
     phoxi_msgs
     tf2_eigen
     Eigen3
-    PCL 
+    PCL
     diagnostic_updater
-    ) 
-
-
+    ament_cmake
+    )
 
 find_package(PhoXi REQUIRED CONFIG PATHS "$ENV{PHOXI_CONTROL_PATH}")
-find_package(ament_cmake REQUIRED)
-
 foreach(Dependency IN ITEMS ${DEPENDENCIES})
   find_package(${Dependency} REQUIRED)
 endforeach()
 
-set(INCLUDES
+# set(INCLUDES
+#     include/phoxi_camera/ros_interface.hpp
+#     include/phoxi_camera/PhoXiInterface.h
+#     include/phoxi_camera/PhoXiDeviceInformation.h
+#     include/phoxi_camera/PhoXiException.h
+#     include/phoxi_camera/RosConversions.h
+#     include/phoxi_camera/PhoXiConversions.h
+# )
 
-    include/phoxi_camera/ros_interface.hpp
-    include/phoxi_camera/PhoXiInterface.h
-    include/phoxi_camera/PhoXiDeviceInformation.h
-    include/phoxi_camera/PhoXiException.h
-    include/phoxi_camera/RosConversions.h
-    include/phoxi_camera/PhoXiConversions.h
+# set(SOURCES
+#     src/RosInterface.cpp
+#     src/PhoXiInterface.cpp
+#     )
 
-)
+# add_executable(phoxi_camera_node src/phoxi_camera_node.cpp)
+# target_compile_options(phoxi_camera_node PRIVATE -g)
 
-
-set(SOURCES
-    src/RosInterface.cpp
-    src/PhoXiInterface.cpp    
-    )
-    
-    
-add_executable(phoxi_camera_node src/phoxi_camera_node.cpp)
-
-
-target_compile_options(phoxi_camera_node PRIVATE -g)
+# -----------------
+# LIBRARY
+# -----------------
 
 add_library(${PROJECT_NAME} SHARED
-  ${SOURCES}
+  src/PhoXiInterface.cpp
   )
-
 ament_target_dependencies(${PROJECT_NAME}
   ${DEPENDENCIES}
-)  
-
+)
 target_include_directories(${PROJECT_NAME} PUBLIC
   include
   ${PHOXI_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-
 )
 
+# -----------------
+# NODES
+# -----------------
 
-
-target_link_libraries(phoxi_camera_node 
+add_executable(phoxi_ros_node
+  src/phoxi_ros_node.cpp)
+target_include_directories(phoxi_ros_node
+  PUBLIC include)
+ament_target_dependencies(phoxi_ros_node
+  ${DEPENDENCIES}
+  )
+target_link_libraries(phoxi_ros_node
   ${PROJECT_NAME}
   ${PHOXI_LIBRARY}
   ${PCL_LIBRARIES}
-
 )
 
 
-
 install(TARGETS
-  phoxi_camera_node
-  DESTINATION lib/${PROJECT_NAME})  
+  phoxi_ros_node
+  DESTINATION lib/${PROJECT_NAME}
+  )
 
-
-install(
-  DIRECTORY launch
+install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
-)
+  )
 
-install(TARGETS
-phoxi_camera
-DESTINATION lib) 
+# install(TARGETS
+# phoxi_camera
+# DESTINATION lib)
 
-ament_export_dependencies(${DEPENDENCIES})
-ament_export_include_directories(include)
-ament_export_libraries(${PROJECT_NAME})
-  
+# ament_export_dependencies(${DEPENDENCIES})
+# ament_export_include_directories(include)
+# ament_export_libraries(${PROJECT_NAME})
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -121,7 +119,5 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
-
-
 
 ament_package()
